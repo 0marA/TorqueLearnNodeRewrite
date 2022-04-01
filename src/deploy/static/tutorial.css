@@ -1,0 +1,111 @@
+
+#content {
+  margin: 40px auto 10px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+#toc #toc-title {
+  color: var(--toc-title);
+  user-select: none;
+  border-bottom: 1px solid var(--toc-title);
+  padding-bottom: 3px;
+  margin-left: 10px;
+}
+
+#toc ul {
+  margin-top: 0;
+  padding-left: 10px;
+}
+
+#toc ul li {
+  padding-top: 16px;
+  width: auto;
+  list-style: none;
+}
+
+#toc ul li a {
+  color: var(--toc-entry);
+  text-decoration: none;
+}
+
+#toc ul li a:hover {
+  color: var(--toc-entry-hover);
+  text-decoration: none;
+}
+
+#toc ul li a:visited {
+  color: var(--toc-entry-visited);
+  text-decoration: none;
+}
+
+#main {
+  margin-left: 3%;
+  width: 745px;
+  margin-right: 5%;
+  max-width: 75%;
+  background-color: var(--background);
+  border: 1px solid var(--background);
+  border-radius: 25px;
+}
+
+#inner {
+  margin-left: 0px;
+}
+
+#main h1 {
+  font-size: 30px;
+  margin-top: 0;
+}
+
+#main a {
+  color: #0094ff;
+}
+
+#main a:visited {
+  color: #005fa4;
+}
+
+pre {
+  white-space: inherit;
+}
+
+code {
+  white-space: pre-wrap;       /* css-3 */
+  white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+  white-space: -pre-wrap;      /* Opera 4-6 */
+  white-space: -o-pre-wrap;    /* Opera 7 */
+  word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+img {
+  max-width: 600px;
+  max-height: 400px;
+}
+
+@media (max-width: 1010px) and (min-width: 0) {
+  #main h1 {
+    font-size: 24px;
+  }
+
+  #toc {
+    text-align: center;
+    display: none;
+  }
+
+  #main {
+    margin-left: 5%;
+    margin-right: 5%;
+  }
+
+  #content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #inner {
+    margin-left: 0;
+  }
+}
+

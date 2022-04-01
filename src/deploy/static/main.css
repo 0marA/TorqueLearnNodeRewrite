@@ -1,0 +1,157 @@
+
+@font-face {
+  font-family: "SFPro";
+  src: url('/static/fonts/SFPro/SF-Pro-Text-Regular.otf');
+}
+@font-face {
+  font-family: "SFCompact";
+  src: url('/static/fonts/SFCompact/SF-Compact.ttf');
+}
+@font-face {
+  font-family: "NY";
+  src: url('/static/fonts/NewYork/NewYork.ttf');
+}
+@font-face {
+  font-family: "SFMono";
+  src: url('/static/fonts/SFMono/SF-Mono.ttf');
+}
+
+
+html,
+body {
+  scroll-behavior: smooth;
+  height: 100%;
+  font-family: "SFPro", Arial, Helvetica, sans-serif;
+}
+
+code {
+	font-family: "SFMono", Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  color: var(--main-text);
+}
+
+#hero {
+  color: #F9F6EF;
+}
+
+body {
+  color: var(--main-text);
+  background-color: var(--background);
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font-family: "Times New Roman", Times, serif;
+}
+
+/*
+ * HEADER 
+*/
+
+header {
+  width: 100%;
+  /*border-bottom: #111 solid 1px;*/
+  background-color: var(--header-background);
+  display: flex;
+  align-items: center;
+}
+
+header a {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+header #logo {
+  margin: 10px 10px 10px 30px;
+  width: 4rem;
+}
+
+header #logotext {
+  font-size: 1.5em;
+  color: var(--header-foreground);
+  margin-right: 20px;
+}
+
+header .header-left-buttons {
+  margin-left: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+header .header-left-buttons a {
+  border: none;
+  color: var(--header-foreground);
+  background-color: var(--header-button-background);
+  height: 3rem;
+  font-size: 1.25em;
+  margin-right: 16px;
+  transition: color 0.25s linear;
+}
+
+header a.back {
+  border: none;
+  color: var(--header-foreground);
+  background-color: var(--header-button-background);
+  height: 3rem;
+  font-size: 1.25em;
+  margin-right: 1.5em;
+  transition: color 0.25s linear;
+}
+
+header a.back:hover {
+  cursor: pointer;
+  color: var(--header-button-hover);
+  transition: color 0.25s linear;
+}
+
+header .header-left-buttons a:hover {
+  cursor: pointer;
+  color: var(--header-button-hover);
+  transition: color 0.25s linear;
+}
+
+header .header-right {
+  margin-left: auto;
+  margin-right: 5px;
+}
+
+.logo-svg {
+  margin: 10px 10px 15px 30px;
+  width: 4rem;
+  height: 4rem;
+}
+
+.logo-svg-path {
+  fill: var(--torque-logo);
+}
+
+.tico {
+  height: 24px;
+  width: 24px;
+}
+
+#toggle-color {
+  margin-left: 30px;
+}
+
+/*  ?  */
+
+@media (max-width: 610px) and (min-width: 0) {
+  header #logotext {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 490px) and (min-width: 0) {
+  #about {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 375px) and (min-width: 0) {
+  a#tut {
+    display: none;
+  }
+}
+
