@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@root/walk": "^1.1.0",
+    "express": "^4.17.3",
     "fs-extra": "^10.0.1",
     "marked": "^4.0.12",
     "showdown": "^2.0.3"

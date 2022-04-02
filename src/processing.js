@@ -2,12 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const fse = require("fs-extra");
 const marked = require("marked");
+const walk = require("@root/walk");
 
 // create a function that reads a file and returns the contents
-const readFile = () => fs.readFileSync(filePath, "utf8");
+const readFile = (filePath) => fs.readFileSync(filePath, "utf8");
 
-const FORMAT_HTML = "../../layout/format.html";
-const SECTION_FORMAT_HTML = "../../layout/section_format.html";
+const FORMAT_HTML = readFile("./layout/format.html");
+const SECTION_FORMAT_HTML = readFile("./layout/section_format.html")
 
 const TOP_DIR_ENTRY = '<a href="{URL}"class="box"><h3>';
 const MIDDLE_SECTION_ENTRY = "</h3>";
@@ -23,7 +24,7 @@ const TOC_LIST_END = "</a></li>";
 
 const deployPath = "./deploy";
 
-function process() {
+async function process() {
   console.log("Processing files...");
 
   // check if deploy folder exists
@@ -84,19 +85,96 @@ function process() {
   // split the csv in an array
   const featuredCSVArray = featuredCSV.split(",");
 
-  let urls;
+  let urls = [];
   // get all md files in ./site/pages
   const files = getAllMdFiles("./site/pages");
+  for (let e of files) {
+    urls.push(await handle_md(e, featuredCSVArray));
+  }
+
+  async function walkFunc(err, pathname, dirent) {
+    if (err) {
+      throw err;
+      return Promise.resolve();
+    }
+    if (!dirent.isDirectory()) {
+      return Promise.resolve();
+    }
+    let ret = "";
+    let p = pathname.replace("deploy", "");
+
+    let paths = fs.readdirSync(pathname)
+    // put paths in alphabetical order
+    paths.sort();
+
+    for(let path in paths) {
+      let name = path.substring(path.lastIndexOf('/')+1);
+      
+      ret += TOP_DIR_ENTRY
+      ret += name;
+      ret += MIDDLE_SECTION_ENTRY
+                        
+      if (fs.existsSync(path + "/index.html")) {
+        ret += (DOCUMENT_SVG_SECTION);
+      } else {
+        ret += (FOLDER_SVG_SECTION);
+      }
+
+      ret = ret.replace("{URL}", [p, name].join("/")); 
+      ret += (BOTTOM_DIR_ENTRY);
+    }
+
+    let output = SECTION_FORMAT_HTML
+    console.log(ret)
+    output = output.replace("{CONTENT}", ret);
+    output = output.replace("{PAGE_NAME}", pathname.substring(pathname.lastIndexOf('/')+1));
+    output = output.replace("{TITLE}", pathname.substring(pathname.lastIndexOf('/')+1));
+
+    urls.push(pathname.lastIndexOf('/')+1);
+    // create file
+    fs.writeFileSync(pathname + "/index.html", output);
+
+  }
+  await walk.walk("./deploy/Tutorials", walkFunc);
+  generate_sitemap(urls);
+
 }
 
-function handle_md(path, featured) {
+async function handle_md(_path, featured) {
   // set all options on marked
   // read path to string
-  const md = fs.readFileSync(path, "utf8");
+  const md = fs.readFileSync(_path, "utf8");
   const html = marked.parse(md);
-  const fileName = path.split("/").pop();
+  const fileName = _path.split("/").pop();
 
-  let output = FORMAT_HTML.toString();
+  let output = FORMAT_HTML;
+  output = output.replace("{CONTENT}", html);
+  output = output.replace("{PAGE_NAME}", fileName);
+
+  let toc;
+
+  featured.forEach((f) => {
+    toc = toc + TOC_LIST_START + f + TOC_LIST_MID + f + TOC_LIST_END;
+  });
+
+  output = output.replace("{TOC}", toc);
+
+  // remove everything pages/ and before from the path
+  // take the end of the path after pages/
+  // remove the .md extension
+  let file_name = _path.split("pages/").pop();
+  // path_url is the actual like website url thing
+  let path_url = "Tutorials/" + file_name;
+
+  // directory for the md
+  let directory = "./deploy/Tutorials/" + file_name.replace(".md", "");
+
+  fs.mkdirSync(directory, { recursive: true });
+
+  // write the file to the directory
+  fs.writeFileSync(path.join(directory, "index.html"), output);
+
+  return path_url;
 }
 
 // copy directory ./site/static to ./deploy/static
@@ -116,5 +194,17 @@ const getAllMdFiles = function (dirPath, arrayOfFiles) {
 
   return arrayOfFiles;
 };
+
+function generate_sitemap(urls) {
+    let sitemap = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">";
+    urls.forEach((url) => {
+      sitemap += "<url><loc>https://learn.texastorque.org/";
+      sitemap += (url);
+      sitemap += "</loc></url>";
+    })
+
+    sitemap += "</urlset>";
+    fs.writeFileSync("./deploy/sitemap.xml", sitemap);
+}
 
 process();
