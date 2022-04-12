@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TorqueLearn - Gears.md</title>
+  <title>TorqueLearn - {PAGE_NAME}</title>
   <link rel="stylesheet" href="/static/main.css"/>
   <link rel="stylesheet" href="/static/tutorial.css"/>
   <link rel="stylesheet" href="/static/prism/syntax.css"/>
@@ -38,7 +38,7 @@
     <div id="toc">
       <span id="toc-title">FEATURED TUTORIALS</span>
       <ul>
-        undefined<li><a class="" href="/Tutorials/Getting Started">Getting Started</a></li><li><a class="" href="/Tutorials/
+        <li><a class="" href="/Tutorials/Getting Started">Getting Started</a></li><li><a class="" href="/Tutorials/
 Setup/How to Install WPILib">
 Setup/How to Install WPILib</a></li><li><a class="" href="/Tutorials/
 Setup/How to Setup VSCode">
@@ -58,167 +58,36 @@ Meta/Contributing To TorqueLearn</a></li>
 
     <div id="main">
       <div id="inner">
-      <h1 id="gears">Gears</h1>
-<h2 id="intro">Intro</h2>
-<p>Gear are a simple yet effective way to trasfer rotaional power. Gears are used in all sorts of mechanisms from drivetrains to jointed arms and elevators.</p>
-<h2 id="concepts">Concepts</h2>
+      <h1 id="navx">navX</h1>
+<p>The navX is an integrated accelerometer, gyroscope, and magnetometer that allows tracking the position of the robot.</p>
+<p><img src="/static/imgs/vendors/navx.png" alt="navX"></p>
+<h3 id="board">Board</h3>
+<p>The board is located on the kMXP port on the RoboRIO, which is the large one in the center.</p>
+<p>The navX has two on-board buttons, calibrate (CAL) and reset (RESET). Holding down reset for three seconds and waiting for the orange light to turn on and off will zero the gyro. Holding down CAL for 10 seconds and then pressing the reset button will recalibrate the sensors.</p>
+<h3 id="code">Code</h3>
+<p>We use the AHRS class for interfacing with the navX. The gyro can be instantiated with:</p>
+<pre><code class="language-java">AHRS gyro = new AHRS(SPI.Port.kMXP);
+</code></pre>
+<p>Below is a list of common methods:</p>
+<pre><code class="language-java">double pitch = gyro.getPitch(); // Get the pitch
+double yaw = gyro.getYaw(); // Get the yaw
+double roll = gyro.getRoll(); // Get the roll
+
+gyro.reset(); // Zero the gyro
+
+gyro.getFusedHeading() // Get a more accurate yaw, [0,360]
+</code></pre>
+<p>See the section <a href="https://pdocs.kauailabs.com/navx-mxp/guidance/terminology/#:~:text=measure%20rotation%20similarly.-,%E2%80%9CFused%E2%80%9D%20Heading,-Given%20the%20gravity">Fused Heading</a> for more in-depth details on the difference in headings.</p>
+<h3 id="magnetometer">Magnetometer</h3>
+<p>The magnetmeter on the NavX informs the NavX of the Earth&#39;s gravitational field. It must be calibrated using <a href="https://www.kauailabs.com/support/navx-mxp/kb/faq.php?id=25">this software</a>.</p>
+<p>Unplug the NavX from the SPI port, and plug the NavX with a mini-B to a computer running the software. Align the NavX according to the included pictures (12 data points). Flash to the controller once done.</p>
+<h3 id="problems--solutions">Problems &amp; Solutions</h3>
 <ul>
-<li><a href="#positioning">Positioning</a></li>
-<li><a href="#reductions">Reductions</a></li>
-<li><a href="#inertia">Inertia</a></li>
+<li>Problem: The gyro is giving wildly inaccurate values!<ul>
+<li>Solution: Have you tried recalibrating it?</li>
 </ul>
-<h3 id="positioning">Positioning</h3>
-<p><strong>Relevance:</strong> Gears that are positioned too close togehter can bind up and cause teeth to wear away faster.</p>
-<p>Gears have an intrinsic property known as diamerial pitch <em>dp</em>. The diametrial pitch is defined as the the number of teeth on a gear <em>T</em> divided by the pitch diamter <em>d</em>. The pitch diameter is the diameter of a circle that intersects the teeth on the gear in the middle of the tooth height (technically it is when the tooth width is the same as the spacing between the teeth). Pitch diameter is easier explained with an image:</p>
-<p><img src="/static/imgs/CAD/ThreadDiagram.gif" alt="Thread Diagram"></p>
-<p>Finding the diameter of a gear from dp:</p>
-<p>$dp=\text{teeth}/\text{diamter}$
-$dp=T/d$
-$d=T/dp$</p>
-<p>The recommended distance <em>rd</em> between gears is the center distance <em>cd</em> plus 0.008 inches.</p>
-<p>$ cd=\frac{T_{1}+T_{2}}{2dp} $</p>
-<p>$ rd=\frac{T*{1}+T*{2}}{2dp}+0.008$</p>
-<h3 id="reductions">Reductions</h3>
-<p><strong>Relevance:</strong> Gears can alter the speed, direction, and torque of an input. Understanding reductions provides insight on how well a system can perfom a task.</p>
-<h4 id="rotational-velocity">Rotational Velocity</h4>
-<p>Gear are typically arranged in two ways: side by side, or stacked.</p>
-<p><img src="/static/imgs/CAD/GearArrangementDiagram.gif" alt="Gear Arrangement Diagram"></p>
-<p>When gears are stacked, they have the same rotaional velocity $\omega$. When gears are side by side, they have the same tangental speed $|v|$.</p>
-<p>A reduction occurs when a small gear &quot;drives&quot; a bigger gear aka. a small gear is next to a bigger gear.</p>
-<p>An upduction is the opposite of a reduction, a larger gear driving a smaller gear. This is ineffcient and is typically something we want to avoid.</p>
-<p>Deriving the relation between side by side gears:</p>
-<p><em>Assume: $T_1$ is the smaller gear</em>
-$r=\text{radius}$</p>
-<p>$v=r\omega$
-$r=\frac{T}{2dp}$
-$\text{since: }v_1=-v_2$
-$r_1\omega_1=-r_2\omega_2$
-$\frac{T_1}{2dp}\omega_1=-\frac{T_2}{2dp}\omega_2$
-$T_1\omega_1=-T_2\omega_2$
-$\omega_1=-\frac{T_2}{T_1}\omega_2$</p>
-<p><del>Deriving</del> the relation between stacked gears:</p>
-<p>$\omega_1=\omega_2$</p>
-<p>In a gearbox, the relations between gears typically alternate.</p>
-<p><strong>EX:</strong> Imagine a gearbox with four gears. The first gear is small and is directly driven by a motor. The second gear larger and is adjacent (side by side) to gear one. The third gear is another small gear but is stacked on top of gear two. The fourth gear is adjacent to gear three.</p>
-<p>$\omega_1=-\frac{T_2}{T_1}\omega_2$
-$\omega_2=\omega_3$
-$\omega_3=-\frac{T_4}{T_3}\omega_4$
-$\omega_4=-\frac{T_3}{T_4}\omega_3$
-$\omega_4=-\frac{T_3}{T_4}\omega_2$
-$\omega_4=\frac{T_3}{T_4}\frac{T_1}{T_2}\omega_1$</p>
-<p>As you may have noticed, when gears alternate, the relationship between the angular speed of the first gear and the angular speed of the final gear are directly proportional. The coefficient on $\omega_1$ is equal to the product of the driving gears&#39; tooth count divided by the product of driven gears&#39; tooth count.</p>
-<p>$\omega_n=\omega_1\prod_{i=1}^{n/2}-\frac{T_{2i-1}}{T_{2i}}$</p>
-<p>Note: In a gearbox with an alternating structure, the number of stacked gears $n/2$ is given a special name as the &quot;number of stages.&quot; Thus, the gearbox from the example above is a two stage gearbox.</p>
-<h4 id="torque">Torque</h4>
-<p>The benefit of using gears to reduce the speed of a motor rather than using less electrical power is that a gearbox will increase the torque of the output in exchange for the lower speed.</p>
-<p><strong>EX:</strong> Deriving the relationship between gears and Torque:</p>
-<p>Let: $\tau_0=\text{motor torque}$</p>
-<p><em>Vector notation will be ommited to imporve readability</em></p>
-<p><em>The following example continues off the previous one</em></p>
-<p>$\vec{\tau}=\vec{r}\times \vec{F}$
-$\tau_0=\tau_1$
-Since adjacent gears are touching at a point: $F_1=F_2=F_{12}$</p>
-<p><img src="/static/imgs/CAD/GearTorqueDiagram.png" alt="Gear Torque Diagram"></p>
-<p>$F_{12}=\tau_1/r_1$
-$\tau_2=-F_{12}r_2$
-$\tau_2=-\frac{r_2}{r_1}\tau_1$
-$\tau_3=\tau_2$
-$\tau_4=-\frac{r_4}{r_3}\tau_3$
-$\tau_4=\frac{r_4}{r_3}\frac{r_2}{r_1}\tau_1$</p>
-<p>From this result, it is apparent that torque follows a similar relationship to that of angular velocity except that the coefficient on the input term in the torque equation is the reciprocal of the corresponding coefficient in the angular velocity equation.</p>
-<p>Generalizing the formula found in the example:</p>
-<p>$\tau_n=\tau_1\prod_{i=1}^{n/2}-\frac{T_{2i}}{T_{2i-1}}$</p>
-<h3 id="inertia">Inertia</h3>
-<p><strong>Relevance:</strong> When a gear spins, it will have a tendency to stay in its current state. This continued spinning, or lack thereof, affects the motion of a gear.</p>
-<p><strong>Moment of Inertia</strong></p>
-<p>The moment of inertia is defined as:</p>
-<p>$I=\int r^2 dm$</p>
-<p>The closer mass is located to the axis of rotation, the lower the moment of inertia, and the easier it is for the object to spin.</p>
-<p>The following formula assumes that the gear has constant density and can be approximated as a cylinder.</p>
-<p>$I_{gear}=mr^2$</p>
-<p>Most Vex gears are half an inch wide and are made of 7075-T6 Aluminum. We can use this to find the mass of the gear in terms of the tooth count of the gear. Using the formula above in the &quot;positioning&quot; section, we can also find the radius of the gear in terms of tooth count.</p>
-<table>
-<thead>
-<tr>
-<th>Equation</th>
-<th>Comment</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>$D=M/V$</td>
-<td>definition of density</td>
-</tr>
-<tr>
-<td>$M=D*V$</td>
-<td>mass formula</td>
-</tr>
-<tr>
-<td>$d=T/dp$</td>
-<td>gear diameter formula</td>
-</tr>
-<tr>
-<td>$r=T/2dp$</td>
-<td>gear radius fomula</td>
-</tr>
-<tr>
-<td>$V=\pi r^2 h$</td>
-<td>volume of a cylinder</td>
-</tr>
-<tr>
-<td>$M=D*\pi r^2 h$</td>
-<td>mass of a cylinder</td>
-</tr>
-<tr>
-<td>$M=D*\pi (T/2dp)^2 h$</td>
-<td>mass of a gear</td>
-</tr>
-<tr>
-<td>$M=D\pi h \frac{T^2}{4dp^2}$</td>
-<td>simplified</td>
-</tr>
-<tr>
-<td>$D=2810\ kg/m^3$</td>
-<td>density of 7075</td>
-</tr>
-<tr>
-<td>$h=.5$</td>
-<td>thickness of a gear</td>
-</tr>
-<tr>
-<td>$M= 1103 \left( \frac{T^2}{dp^2} \right)$</td>
-<td>substitution and simplification</td>
-</tr>
-</tbody></table>
-<p>The mass of a gear is 1103 time the square of the tooth count divided by the square of the diametrial pitch. This means that the moment of inertia ($kgm^2$) of a gear is:</p>
-<p>$I_{gear}=D\pi h \left( \frac{T^2}{4dp^2} \right)^2$
-$I_{gear}=D\pi h \left( \frac{T^4}{16dp^4} \right)$
-$I_{gear}=276 \left( \frac{T^4}{dp^4} \right)$</p>
-<p><strong>Inertia in Reductions</strong></p>
-<p>From before we have:</p>
-<p>$\omega_1=-\frac{T_2}{T_1}\omega_2$
-$\tau_2=-\frac{r_2}{r_1}\tau_1$</p>
-<p>Derivative with respect to time:
-$\alpha_1=-\frac{T_2}{T_1}\alpha_2$</p>
-<p>By definition:
-$\tau=I\alpha$
-$r=T/2dp$</p>
-<p>Substituting:</p>
-<p>$\tau_1=I_1\alpha_1$
-$\tau_2=I_2\alpha_2$
-$I_2\alpha_2=-\frac{r_2}{r_1}I_1\alpha_1$
-$I_2\alpha_2=-\frac{T_2/2dp}{T_1/2dp}I_1\alpha_1$
-$I_2\alpha_2=-\frac{T_2}{T_1}I_1\alpha_1$
-$I_2\alpha_2=-\frac{T_2}{T_1}I_1* \left( -\frac{T_2}{T_1}\alpha_2 \right)$
-$I_2\alpha_2=\left( \frac{T_2}{T_1} \right)^2I_1 \alpha_2$
-$I_2=\left( \frac{T_2}{T_1} \right)^2I_1$
-$I_1=\left( \frac{T_1}{T_2} \right)^2I_2$</p>
-<p>Since the apparent moment of inertia is directly proportional to the square of the reduction, this derivation shows us that gear reducations allow inputs to drive systems with much larger moments as if they were small moments. In other words, reducations can help move a large flywheel with ease.</p>
-<p>Although gears do add interia to a system, it is typically small in comparison to the benefit of the reduction.</p>
-<p>Taking into account the inertia of the gears themselves:</p>
-<p>$I_{in}=\left( \frac{T_1}{T_2} \right)^2(I_{out}+I_{G2}) + I_{G1}$
-$I_{out}=\left( I_{in}-I_{G1} \right) \left( \frac{T_2}{T_1} \right)^2-I_{G2}$</p>
-<h2 id="credits">Credits</h2>
-<p>Initially written by <a href="https://github.com/Menezmic21/">Michael Menezes</a> in September 2021</p>
+</li>
+</ul>
 
       </div>
     </div>

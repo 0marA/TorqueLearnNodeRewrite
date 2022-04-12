@@ -64,7 +64,6 @@ async function process() {
                 }
             else {
                 // for each file in layoutFiles, create a new folder in deploy
-                // this never gets called lol
                 let dir = `./deploy/${layoutFile.replace(".html", "")}`;
                 fs.mkdirSync(dir);
                 // copy the file over
@@ -75,6 +74,7 @@ async function process() {
             }
         }
     });
+
     // recursively clone the files in ./layout/static to ./deploy/static
     fse.copySync(
         `./layout/static`,
@@ -92,105 +92,49 @@ async function process() {
     const featuredCSVArray = featuredCSV.split(",");
 
     let urls = [];
+
     // get all md files in ./site/pages
     const files = getAllMdFiles("./site/pages");
-    // console.log(files);
-    for (let e of files) {
-        urls.push(await handle_md(e, featuredCSVArray));
+
+    for (entry of files) {
+        urls.push(handle_md(entry, featuredCSVArray));
     }
-
-    // async function walkFunc(err, pathname, dirent) {
-    //     if (err) {
-    //         throw err;
-    //         return Promise.resolve();
-    //     }
-    //     if (!dirent.isDirectory()) {
-    //         return Promise.resolve();
-    //     }
-    //     let ret = "";
-    //     let p = pathname.replace("deploy", "");
-
-    //     let paths = fs.readdirSync(pathname);
-    //     // put paths in alphabetical order
-    //     paths.sort();
-
-    //     for (let path in paths) {
-    //         let name = path.substring(path.lastIndexOf("/") + 1);
-
-    //         ret += TOP_DIR_ENTRY;
-    //         ret += name;
-    //         ret += MIDDLE_SECTION_ENTRY;
-
-    //         if (fs.existsSync(path + "/index.html")) {
-    //             ret += DOCUMENT_SVG_SECTION;
-    //         } else {
-    //             ret += FOLDER_SVG_SECTION;
-    //         }
-
-    //         ret = ret.replace("{URL}", [p, name].join("/"));
-    //         ret += BOTTOM_DIR_ENTRY;
-    //     }
-
-    //     let output = SECTION_FORMAT_HTML;
-    //     //(ret)
-    //     output = output.replace("{CONTENT}", ret);
-    //     output = output.replace(
-    //         "{PAGE_NAME}",
-    //         pathname.substring(pathname.lastIndexOf("/") + 1)
-    //     );
-    //     output = output.replace(
-    //         "{TITLE}",
-    //         pathname.substring(pathname.lastIndexOf("/") + 1)
-    //     );
-
-    //     urls.push(pathname.lastIndexOf("/") + 1);
-    //     // create file
-    //     fs.writeFileSync(pathname + "/index.html", output);
-    // }
-    // await walk.walk("./deploy/Tutorials", walkFunc);
-    generate_sitemap(urls);
 }
 
-async function handle_md(_path, featured) {
-    // READING MARKDOWN WORKS
-    const md = fs.readFileSync(_path, "utf8");
-    // PARSING MARKDOWN WORKS
-    const html = marked.parse(md);
+function handle_md(path, featured) {
+    // read the file
+    const file = fs.readFileSync(path, "utf8");
 
-    // INCLUDES EXTENSIONS
-    const fileName = _path.split("/").pop();
+    let html = marked.parse(file);
 
     let output = FORMAT_HTML;
-    // ADDING CONTENT WORKS
     output = output.replace("{CONTENT}", html);
-    output = output.replace("{PAGE_NAME}", fileName);
-
-    let toc;
+    let toc = "";
 
     featured.forEach((f) => {
-        toc = toc + TOC_LIST_START + f + TOC_LIST_MID + f + TOC_LIST_END;
+        toc += TOC_LIST_START + f + TOC_LIST_MID + f + TOC_LIST_END;
     });
 
     output = output.replace("{TOC}", toc);
 
-    // remove everything pages/ and before from the path
-    // take the end of the path after pages/
-    // remove the .md extension
-    let file_name = _path.split("pages/").pop();
-    // path_url is the actual like website url thing
-    let path_url = "Tutorials/" + file_name;
+    let file_name = path.split("pages/").pop();
 
-    // directory for the md
-    let directory = "./deploy/Tutorials/" + file_name.replace(".md", "");
+    file_name = file_name.replace(".md", "");
+    let path_url = ["Tutorials/", file_name].join("");
+    file_name += ".html";
+    file_name = ["deploy/Tutorials/", file_name].join("");
 
-    fs.mkdirSync(directory, { recursive: true });
+    // get directory name and do
+    let directories = file_name.replace(".html", "");
+    fs.mkdirSync(directories, { recursive: true }).expect(
+        "Failed to create directories!"
+    );
 
-    // write the file to the directory
-    fs.writeFileSync("./" + path.join(directory, "index.html"), output);
+    fs.create([directories, "/index.html"].join(""));
+    file.write_all(output.as_bytes()).expect("Failed to write to file :(!");
 
     return path_url;
 }
-
 const getAllMdFiles = function (dirPath, arrayOfFiles) {
     const files = fs.readdirSync(dirPath);
 
