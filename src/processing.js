@@ -99,15 +99,96 @@ async function process() {
     for (entry of files) {
         urls.push(handle_md(entry, featuredCSVArray));
     }
+
+    // walk through a directory
+    const walk = (dir, done) => {
+        let results = [];
+        fs.readdir(dir, (err, list) => {
+            if (err) return done(err);
+            let pending = list.length;
+            if (!pending) return done(null, results);
+            list.forEach((file) => {
+                file = path.resolve(dir, file);
+                fs.stat(file, (err, stat) => {
+                    if (stat && stat.isDirectory()) {
+                        walk(file, (err, res) => {
+                            results = results.concat(res);
+                            if (!--pending) done(null, results);
+                        });
+                    } else {
+                        results.push(file);
+                        if (!--pending) done(null, results);
+                    }
+                });
+            });
+        });
+    };
+    walk("./deploy/Tutorials", (a, r) => {
+        console.log(r);
+    });
+
+    // let skippedDirectories = []
+    // async function walkFunc(err, pathname, dirent) {
+    //     let checkFileExists = (s) => new Promise((r) => fs.access(s, fs.constants.F_OK, (e) => r(!e)));
+    //     // don't descend into sus directories
+    //     directorySkipped = false;
+    //     skippedDirectories.forEach((dir) => {
+    //         if (pathname.includes(dir)) {
+    //             directorySkipped = true;
+    //         }
+    //     })
+    //     if (directorySkipped) {
+    //         console.log("Directory was previously sus!")
+    //         return false
+    //     }
+
+    //     if (!(dirent.isDirectory() && checkFileExists(pathname + "/index.html"))) {
+    //         skippedDirectories.push(pathname)
+    //         return false;
+    //     }
+    //     let p = pathname.replace("deploy", "")
+    //     let ret = "";
+    //     let paths = fs.readdirSync(pathname)
+    //     for (let path of paths) {
+    //         if (checkFileExists(pathname + path + "/index.html")) {
+    //             console.log('Skipped!')
+    //             continue
+    //             // ret += DOCUMENT_SVG_SECTION
+    //         }
+    //         let name = path.split("/").pop();
+    //         ret += TOP_DIR_ENTRY
+    //         ret += name
+    //         ret += MIDDLE_SECTION_ENTRY
+    //         ret += FOLDER_SVG_SECTION
+
+    //         ret = ret.replace("{URL}", path.split("/").pop())
+    //         ret += BOTTOM_DIR_ENTRY
+    //     }
+
+    //     let output = SECTION_FORMAT_HTML
+    //     output = output.replace("{CONTENT}", ret)
+    //     // replace {PAGE_NAME} with the name of the directory
+    //     output = output.replace("{PAGE_NAME}", pathname.split("/").pop())
+    //     output = output.replace("{TITLE}", pathname.split("/").pop())
+    //     urls.push(pathname)
+
+    //     fs.writeFileSync(pathname + "/index.html", output)
+
+    // }
+
+    // walk.walk(deployPath + "/Tutorials", walkFunc);
 }
 
 function handle_md(path, featured) {
     // read the file
     const file = fs.readFileSync(path, "utf8");
 
+    nameOfFile = path.split("pages/").pop();
+
     let html = marked.parse(file);
 
     let output = FORMAT_HTML;
+    output = output.replace("{PAGE_NAME}", "");
     output = output.replace("{CONTENT}", html);
     let toc = "";
 
@@ -126,12 +207,10 @@ function handle_md(path, featured) {
 
     // get directory name and do
     let directories = file_name.replace(".html", "");
-    fs.mkdirSync(directories, { recursive: true }).expect(
-        "Failed to create directories!"
-    );
+    fs.mkdirSync("./" + directories, { recursive: true });
 
-    fs.create([directories, "/index.html"].join(""));
-    file.write_all(output.as_bytes()).expect("Failed to write to file :(!");
+    // write a file
+    fs.writeFileSync("./" + directories + "/index.html", output);
 
     return path_url;
 }
