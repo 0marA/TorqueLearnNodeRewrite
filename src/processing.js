@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const fse = require("fs-extra");
 const marked = require("marked");
-const walk = require("@root/walk");
+const Walk = require("@root/walk");
 
 // create a function that reads a file and returns the contents
 const readFile = (filePath) => fs.readFileSync(filePath, "utf8");
@@ -100,32 +100,32 @@ async function process() {
         urls.push(handle_md(entry, featuredCSVArray));
     }
 
-    // walk through a directory
-    const walk = (dir, done) => {
-        let results = [];
-        fs.readdir(dir, (err, list) => {
-            if (err) return done(err);
-            let pending = list.length;
-            if (!pending) return done(null, results);
-            list.forEach((file) => {
-                file = path.resolve(dir, file);
-                fs.stat(file, (err, stat) => {
-                    if (stat && stat.isDirectory()) {
-                        walk(file, (err, res) => {
-                            results = results.concat(res);
-                            if (!--pending) done(null, results);
-                        });
-                    } else {
-                        results.push(file);
-                        if (!--pending) done(null, results);
-                    }
-                });
-            });
-        });
-    };
-    walk("./deploy/Tutorials", (a, r) => {
-        console.log(r);
-    });
+    // // walk through a directory
+    // const walk = (dir, done) => {
+    //     let results = [];
+    //     fs.readdir(dir, (err, list) => {
+    //         if (err) return done(err);
+    //         let pending = list.length;
+    //         if (!pending) return done(null, results);
+    //         list.forEach((file) => {
+    //             file = path.resolve(dir, file);
+    //             fs.stat(file, (err, stat) => {
+    //                 if (stat && stat.isDirectory()) {
+    //                     walk(file, (err, res) => {
+    //                         results = results.concat(res);
+    //                         if (!--pending) done(null, results);
+    //                     });
+    //                 } else {
+    //                     results.push(file);
+    //                     if (!--pending) done(null, results);
+    //                 }
+    //             });
+    //         });
+    //     });
+    // };
+    // walk("./deploy/Tutorials", (a, r) => {
+    //     console.log(r);
+    // });
 
     // let skippedDirectories = []
     // async function walkFunc(err, pathname, dirent) {
@@ -177,6 +177,17 @@ async function process() {
     // }
 
     // walk.walk(deployPath + "/Tutorials", walkFunc);
+
+    Walk.walk("./deploy/Tutorials", walkFunc);
+    let filteredPaths = [];
+    async function walkFunc(err, pathname, dirent) {
+        if (err) {
+            console.log("Error Walking");
+        }
+
+        if (!dirent.isDirectory() && !fs.existsSync(pathname + "/index.html"))
+            return false;
+    }
 }
 
 function handle_md(path, featured) {
