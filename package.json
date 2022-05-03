@@ -4,6 +4,7 @@
     "express": "^4.17.3",
     "fs-extra": "^10.0.1",
     "marked": "^4.0.12",
-    "showdown": "^2.0.3"
+    "showdown": "^2.0.3",
+    "walkdir": "^0.4.1"
   }
 }

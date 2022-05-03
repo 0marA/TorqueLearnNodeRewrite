@@ -2,7 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const fse = require("fs-extra");
 const marked = require("marked");
-const Walk = require("@root/walk");
+const walk = require("walkdir");
+const p = require("path");
 
 // create a function that reads a file and returns the contents
 const readFile = (filePath) => fs.readFileSync(filePath, "utf8");
@@ -100,33 +101,6 @@ async function process() {
         urls.push(handle_md(entry, featuredCSVArray));
     }
 
-    // // walk through a directory
-    // const walk = (dir, done) => {
-    //     let results = [];
-    //     fs.readdir(dir, (err, list) => {
-    //         if (err) return done(err);
-    //         let pending = list.length;
-    //         if (!pending) return done(null, results);
-    //         list.forEach((file) => {
-    //             file = path.resolve(dir, file);
-    //             fs.stat(file, (err, stat) => {
-    //                 if (stat && stat.isDirectory()) {
-    //                     walk(file, (err, res) => {
-    //                         results = results.concat(res);
-    //                         if (!--pending) done(null, results);
-    //                     });
-    //                 } else {
-    //                     results.push(file);
-    //                     if (!--pending) done(null, results);
-    //                 }
-    //             });
-    //         });
-    //     });
-    // };
-    // walk("./deploy/Tutorials", (a, r) => {
-    //     console.log(r);
-    // });
-
     // let skippedDirectories = []
     // async function walkFunc(err, pathname, dirent) {
     //     let checkFileExists = (s) => new Promise((r) => fs.access(s, fs.constants.F_OK, (e) => r(!e)));
@@ -178,18 +152,49 @@ async function process() {
 
     // walk.walk(deployPath + "/Tutorials", walkFunc);
 
-    Walk.walk("./deploy/Tutorials", walkFunc);
-    let filteredPaths = [];
-    async function walkFunc(err, pathname, dirent) {
-        if (err) {
-            console.log("Error Walking");
+    //await Walk.walk("./deploy/Tutorials", walkFunc);
+
+    walk("./deploy/Tutorials", function (path, stat) {
+        if (!stat.isDirectory() || !path.endsWith("index.html")) {
+            return;
         }
 
-        if (!dirent.isDirectory() && !fs.existsSync(pathname + "/index.html"))
-            return false;
-    }
-}
+        let ret;
+        let p = path.replace("deploy", "");
+        console.log(p);
 
+        let paths = fs.readdirSync(path);
+        if (stat.isDirectory())
+            for (path in paths) {
+                let name = path.split("/").pop();
+
+                ret += TOP_DIR_ENTRY;
+                ret += name;
+                ret += MIDDLE_SECTION_ENTRY;
+                ret += FOLDER_SVG_SECTION;
+
+                if (path.endsWith("index.html")) ret += DOCUMENT_SVG_SECTION;
+                else ret += FOLDER_SVG_SECTION;
+
+                ret = ret.replace("{URL}", path.split("/").pop());
+                ret += BOTTOM_DIR_ENTRY;
+            }
+        changeOutput();
+    });
+
+    function changeOutput() {
+        let output = SECTION_FORMAT_HTML;
+        output = output.replace("{CONTENT}", ret);
+        output = output.replace("{PAGE_NAME}", pathname.split("/").pop());
+        output = output.replace("{TITLE}", pathname.split("/").pop());
+        urls.push(path);
+
+        fs.writeFileSync(pathname + "/index.html", output);
+    }
+
+    generate_sitemap(urls);
+    console.log("Deploy directory successfully created!");
+}
 function handle_md(path, featured) {
     // read the file
     const file = fs.readFileSync(path, "utf8");
